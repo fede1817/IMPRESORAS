@@ -197,6 +197,7 @@ const handleEdit = (impresora) => {
               <select name="tipo" value={formData.tipo} onChange={handleInputChange}>
                 <option value="principal">Principal</option>
                 <option value="backup">Backup</option>
+                <option value="backup">Comercial</option>
               </select>
               <div className="form-buttons">
                 <button type="submit">Guardar</button>

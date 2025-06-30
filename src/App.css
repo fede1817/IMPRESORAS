@@ -203,7 +203,9 @@ a:hover {
 
 .action-buttons {
   display: flex;
-  gap: 8px; /* Espacio entre botones */
-  justify-content: initial;
+  gap: 10px;           /* Espacio entre botones */
+  justify-content: flex-start;
   align-items: center;
+  margin-left: 0;
+  padding-left: 0;
 }
