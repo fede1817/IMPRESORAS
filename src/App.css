@@ -180,3 +180,30 @@ a:hover {
 .delete-btn:hover {
   background-color: #c62828;
 }
+
+.editing-row {
+  background-color: #333652 !important;
+  border-left: 5px solid #00bcd4;
+  transition: background-color 0.3s ease;
+}
+
+.edit-btn {
+  background-color: #43a047;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.edit-btn:hover {
+  background-color: #317a34;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px; /* Espacio entre botones */
+  justify-content: initial;
+  align-items: center;
+}

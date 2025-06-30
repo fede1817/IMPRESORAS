@@ -8,6 +8,15 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
+const pool = new Pool({
+  user: 'postgres',
+  host: 'localhost',
+  database: 'Impresoras',
+  password: '123',
+  port: 5432,
+});
+
+
 app.post('/api/impresoras', async (req, res) => {
   const { ip, sucursal, modelo, drivers_url, tipo } = req.body;
   try {
@@ -20,14 +29,6 @@ app.post('/api/impresoras', async (req, res) => {
     console.error('Error al agregar impresora:', err);
     res.status(500).json({ error: 'Error al insertar impresora' });
   }
-});
-// Configuración de conexión a PostgreSQL
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'Impresoras',
-  password: '123',
-  port: 5432,
 });
 
 // OID para tóner negro
@@ -64,14 +65,11 @@ app.get('/api/toners', async (req, res) => {
         };
       })
     );
-app.delete('/api/impresoras/', async (req, res) => {
+app.delete('/api/impresoras/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const result = await pool.query(
-      'DELETE FROM impresoras WHERE id = $1 RETURNING *',
-      [id]
-    );
+    const result = await pool.query('DELETE FROM impresoras WHERE id = $1 RETURNING *', [id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Impresora no encontrada' });
@@ -90,6 +88,30 @@ app.delete('/api/impresoras/', async (req, res) => {
     res.status(500).json({ error: 'Error consultando base de datos' });
   }
 });
+
+app.put('/api/impresoras/:id', async (req, res) => {
+  const { id } = req.params;
+  const { ip, sucursal, modelo, drivers_url, tipo } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE impresoras 
+       SET ip = $1, sucursal = $2, modelo = $3, drivers_url = $4, tipo = $5 
+       WHERE id = $6 RETURNING *`,
+      [ip, sucursal, modelo, drivers_url, tipo, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Impresora no encontrada' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error al editar impresora:', error);
+    res.status(500).json({ error: 'Error al editar impresora' });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log('Servidor SNMP activo en http://localhost:${PORT} ✅');

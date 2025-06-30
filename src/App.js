@@ -11,6 +11,7 @@ function App() {
     drivers_url: '',
     tipo: 'principal'
   });
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     fetch('http://localhost:3001/api/toners')
@@ -31,25 +32,60 @@ function App() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+
+  const method = editingId ? 'PUT' : 'POST';
+  const url = editingId
+    ? `http://localhost:3001/api/impresoras/${editingId}`
+    : 'http://localhost:3001/api/impresoras';
+
+  try {
+    await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+
+    setShowModal(false);
+    setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal' });
+    setEditingId(null);
+    window.location.reload(); // recargar o re-fetch
+  } catch (err) {
+    console.error('Error al guardar:', err);
+  }
+};
+
+  const handleDelete = async (id) => {
+  if (window.confirm('¿Estás seguro que deseas eliminar esta impresora?')) {
     try {
-      await fetch('http://localhost:3001/api/impresoras', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      await fetch(`http://localhost:3001/api/impresoras/${id}`, {
+        method: 'DELETE',
       });
-      setShowModal(false);
-      window.location.reload();
-    } catch (err) {
-      console.error('Error al agregar impresora:', err);
+      // Volvés a cargar la lista
+      setImpresoras(prev => prev.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Error al eliminar la impresora:', error);
     }
-  };
+  }
+};
+
+const handleEdit = (impresora) => {
+  setFormData({
+    ip: impresora.ip,
+    sucursal: impresora.sucursal,
+    modelo: impresora.modelo,
+    drivers_url: impresora.drivers_url,
+    tipo: impresora.tipo
+  });
+  setEditingId(impresora.id); // Guardamos el ID para saber si es edición
+  setShowModal(true);
+};
 
   return (
     <div className="App dark-mode">
       <h1>Estado de las impresoras Ricoh</h1>
 
-      <h2>🖨️ Impresoras Principales</h2>
+      <h2>Impresoras Principales</h2>
       <button className="add-btn" onClick={() => setShowModal(true)}>➕ Agregar Impresora</button>
 
       <table className="dark-table">
@@ -60,11 +96,12 @@ function App() {
             <th>Modelo</th>
             <th>Nivel de Tóner Negro</th>
             <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {impresoras.filter(i => i.tipo === 'principal').map((impresora, index) => (
-            <tr key={`principal-${index}`}>
+            <tr key={`principal-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
               <td>
                 <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
                   {impresora.ip}
@@ -88,12 +125,18 @@ function App() {
                 ) : 'No disponible'}
               </td>
               <td>{impresora.error ? '❌ Error' : '✅ OK'}</td>
+              <td>
+  <div className="action-buttons">
+    <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
+    <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
+  </div>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <h2>📄 Impresoras Backup</h2>
+      <h2>Impresoras Backup</h2>
       <table className="dark-table">
         <thead>
           <tr>
@@ -102,11 +145,12 @@ function App() {
             <th>Modelo</th>
             <th>Nivel de Tóner Negro</th>
             <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {impresoras.filter(i => i.tipo === 'backup').map((impresora, index) => (
-            <tr key={`backup-${index}`}>
+            <tr key={`backup-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
               <td>
                 <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
                   {impresora.ip}
@@ -130,6 +174,12 @@ function App() {
                 ) : 'No disponible'}
               </td>
               <td>{impresora.error ? '❌ Error' : '✅ OK'}</td>
+              <td>
+              <div className="action-buttons">
+    <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
+    <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
+  </div>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -138,7 +188,7 @@ function App() {
       {showModal && (
         <div className="modal">
           <div className="modal-content">
-            <h2>Agregar nueva impresora</h2>
+            <h2>{editingId ? 'Editar impresora' : 'Agregar nueva impresora'}</h2>
             <form onSubmit={handleSubmit}>
               <input name="ip" placeholder="IP" value={formData.ip} onChange={handleInputChange} required />
               <input name="sucursal" placeholder="Sucursal" value={formData.sucursal} onChange={handleInputChange} required />
@@ -150,7 +200,16 @@ function App() {
               </select>
               <div className="form-buttons">
                 <button type="submit">Guardar</button>
-                <button type="button" onClick={() => setShowModal(false)}>Cancelar</button>
+                <button
+  type="button"
+  onClick={() => {
+    setShowModal(false);
+    setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal' });
+    setEditingId(null);
+  }}
+>
+  Cancelar
+</button>
               </div>
             </form>
           </div>
