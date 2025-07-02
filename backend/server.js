@@ -50,6 +50,46 @@ function consultarToner(ip) {
   });
 }
 
+setInterval(async () => {
+  try {
+    const { rows: impresoras } = await pool.query('SELECT * FROM impresoras');
+
+    for (const impresora of impresoras) {
+      const resultado = await consultarToner(impresora.ip);
+
+      if (!resultado.error && resultado.toner !== null) {
+        const tonerActual = resultado.toner;
+        const tonerAnterior = impresora.toner_anterior;
+
+        // Si se repuso el tóner (el valor subió)
+        if (tonerAnterior !== null && tonerActual > tonerAnterior) {
+          await pool.query(
+            `UPDATE impresoras
+             SET cambios_toner = cambios_toner + 1,
+                 fecha_ultimo_cambio = NOW(),
+                 toner_anterior = $1,
+                 toner_reserva = GREATEST(toner_reserva - 1, 0)
+             WHERE id = $2`,
+            [tonerActual, impresora.id]
+          );
+          console.log(`🟢 Cambio de tóner detectado en IP ${impresora.ip}`);
+        } else {
+          // Solo actualiza el toner_anterior sin contar como cambio
+          await pool.query(
+            `UPDATE impresoras
+             SET toner_anterior = $1
+             WHERE id = $2`,
+            [tonerActual, impresora.id]
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error en la verificación automática de tóner:', error);
+  }
+}, 300000); // 5 minutos
+
+
 app.get('/api/toners', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM impresoras ORDER BY id');

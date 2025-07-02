@@ -95,7 +95,7 @@ const handleEdit = (impresora) => {
             <th>Sucursal</th>
             <th>Modelo</th>
             <th>Nivel de Tóner Negro</th>
-            <th>Estado</th>
+            <th>Info</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -124,7 +124,7 @@ const handleEdit = (impresora) => {
                   </div>
                 ) : 'No disponible'}
               </td>
-              <td>{impresora.error ? '❌ Error' : '✅ OK'}</td>
+              <td><button>ℹ</button></td>
               <td>
   <div className="action-buttons">
     <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
@@ -144,7 +144,7 @@ const handleEdit = (impresora) => {
             <th>Sucursal</th>
             <th>Modelo</th>
             <th>Nivel de Tóner Negro</th>
-            <th>Estado</th>
+            <th>Info</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -173,7 +173,7 @@ const handleEdit = (impresora) => {
                   </div>
                 ) : 'No disponible'}
               </td>
-              <td>{impresora.error ? '❌ Error' : '✅ OK'}</td>
+              <td><button>ℹ</button></td>
               <td>
               <div className="action-buttons">
     <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
@@ -197,7 +197,6 @@ const handleEdit = (impresora) => {
               <select name="tipo" value={formData.tipo} onChange={handleInputChange}>
                 <option value="principal">Principal</option>
                 <option value="backup">Backup</option>
-                <option value="backup">Comercial</option>
               </select>
               <div className="form-buttons">
                 <button type="submit">Guardar</button>
