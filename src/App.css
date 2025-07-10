@@ -167,45 +167,77 @@ a:hover {
   background-color: #0097a7;
 }
 
+/* Contenedor de botones alineado y elegante */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center; /* Alinea hacia la izquierda */
+  align-items: center;
+}
+
+/* Botón de eliminar (rojo) */
 .delete-btn {
   background-color: #e53935;
   color: white;
   border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .delete-btn:hover {
   background-color: #c62828;
+  transform: scale(1.05);
 }
 
+/* Botón de editar (verde) */
+.edit-btn {
+  background-color: #43a047;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.edit-btn:hover {
+  background-color: #317a34;
+  transform: scale(1.05);
+}
+
+/* Fila editada */
 .editing-row {
   background-color: #333652 !important;
   border-left: 5px solid #00bcd4;
   transition: background-color 0.3s ease;
 }
 
-.edit-btn {
-  background-color: #43a047;
+
+.info-button {
+  background-color: #0d6efd;
   color: white;
   border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
-  font-size: 14px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.edit-btn:hover {
-  background-color: #317a34;
+.info-button:hover {
+  background-color: #0b5ed7;
+  transform: scale(1.1);
 }
 
-.action-buttons {
-  display: flex;
-  gap: 10px;           /* Espacio entre botones */
-  justify-content: flex-start;
-  align-items: center;
-  margin-left: 0;
-  padding-left: 0;
+
+
+.dark-table th,
+.dark-table td {
+  text-align: center;
 }

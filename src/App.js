@@ -9,9 +9,11 @@ function App() {
     sucursal: '',
     modelo: '',
     drivers_url: '',
-    tipo: 'principal'
+    tipo: 'principal',
+    toner_reserva: '',
   });
   const [editingId, setEditingId] = useState(null);
+  const [infoModal, setInfoModal] = useState({ visible: false, data: null });
 
   useEffect(() => {
     fetch('http://localhost:3001/api/toners')
@@ -47,7 +49,7 @@ function App() {
     });
 
     setShowModal(false);
-    setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal' });
+    setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal', toner_reserva: '' });
     setEditingId(null);
     window.location.reload(); // recargar o re-fetch
   } catch (err) {
@@ -75,12 +77,12 @@ const handleEdit = (impresora) => {
     sucursal: impresora.sucursal,
     modelo: impresora.modelo,
     drivers_url: impresora.drivers_url,
-    tipo: impresora.tipo
+    tipo: impresora.tipo,
+    toner_reserva: impresora.toner_reserva
   });
   setEditingId(impresora.id); // Guardamos el ID para saber si es edición
   setShowModal(true);
 };
-
   return (
     <div className="App dark-mode">
       <h1>Estado de las impresoras Ricoh</h1>
@@ -124,7 +126,13 @@ const handleEdit = (impresora) => {
                   </div>
                 ) : 'No disponible'}
               </td>
-              <td><button>ℹ</button></td>
+              <td> <button
+    className="info-button"
+    onClick={() => setInfoModal({ visible: true, data: impresora })}
+    title="Ver información"
+  >
+    ℹ
+  </button></td>
               <td>
   <div className="action-buttons">
     <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
@@ -173,7 +181,13 @@ const handleEdit = (impresora) => {
                   </div>
                 ) : 'No disponible'}
               </td>
-              <td><button>ℹ</button></td>
+              <td><button
+    className="info-button"
+    onClick={() => setInfoModal({ visible: true, data: impresora })}
+    title="Ver información"
+  >
+    ℹ
+  </button></td>
               <td>
               <div className="action-buttons">
     <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
@@ -198,13 +212,14 @@ const handleEdit = (impresora) => {
                 <option value="principal">Principal</option>
                 <option value="backup">Backup</option>
               </select>
+              <input name="toner_reserva" placeholder="Reserva de Toner" value={formData.toner_reserva} onChange={handleInputChange} required />
               <div className="form-buttons">
                 <button type="submit">Guardar</button>
                 <button
   type="button"
   onClick={() => {
     setShowModal(false);
-    setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal' });
+    setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal', toner_reserva:'' });
     setEditingId(null);
   }}
 >
@@ -215,6 +230,20 @@ const handleEdit = (impresora) => {
           </div>
         </div>
       )}
+
+      {infoModal.visible && (
+  <div className="modal">
+    <div className="modal-content">
+      <h3>Información de la Impresora</h3>
+      <p><strong>Sucursal:</strong> {infoModal.data.sucursal}</p>
+      <p><strong>Tipo:</strong> {infoModal.data.tipo}</p>
+      <p><strong>Reserva de Tóner:</strong> {infoModal.data.toner_reserva}</p>
+      <p><strong>Último cambio de tóner:</strong> {infoModal.data.fecha_ultimo_cambio ? new Date(infoModal.data.fecha_ultimo_cambio).toLocaleString() : 'N/A'}</p>
+      <button onClick={() => setInfoModal({ visible: false, data: null })}>Cerrar</button>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

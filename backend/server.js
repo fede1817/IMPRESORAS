@@ -18,11 +18,11 @@ const pool = new Pool({
 
 
 app.post('/api/impresoras', async (req, res) => {
-  const { ip, sucursal, modelo, drivers_url, tipo } = req.body;
+  const { ip, sucursal, modelo, drivers_url, tipo, toner_reserva } = req.body;
   try {
     await pool.query(
-      'INSERT INTO impresoras (ip, sucursal, modelo, drivers_url, tipo) VALUES ($1, $2, $3, $4, $5)',
-      [ip, sucursal, modelo, drivers_url, tipo]
+      'INSERT INTO impresoras (ip, sucursal, modelo, drivers_url, tipo, toner_reserva) VALUES ($1, $2, $3, $4, $5, $6)',
+      [ip, sucursal, modelo, drivers_url, tipo, toner_reserva]
     );
     res.status(201).json({ message: 'Impresora agregada' });
   } catch (err) {
@@ -131,14 +131,14 @@ app.delete('/api/impresoras/:id', async (req, res) => {
 
 app.put('/api/impresoras/:id', async (req, res) => {
   const { id } = req.params;
-  const { ip, sucursal, modelo, drivers_url, tipo } = req.body;
+  const { ip, sucursal, modelo, drivers_url, tipo, toner_reserva } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE impresoras 
-       SET ip = $1, sucursal = $2, modelo = $3, drivers_url = $4, tipo = $5 
-       WHERE id = $6 RETURNING *`,
-      [ip, sucursal, modelo, drivers_url, tipo, id]
+       SET ip = $1, sucursal = $2, modelo = $3, drivers_url = $4, tipo = $5, toner_reserva = $6 
+       WHERE id = $7 RETURNING *`,
+      [ip, sucursal, modelo, drivers_url, tipo, toner_reserva, id]
     );
 
     if (result.rows.length === 0) {
@@ -151,6 +151,7 @@ app.put('/api/impresoras/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al editar impresora' });
   }
 });
+
 
 
 app.listen(PORT, '0.0.0.0', () => {
