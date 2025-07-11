@@ -18,11 +18,11 @@ const pool = new Pool({
 
 
 app.post('/api/impresoras', async (req, res) => {
-  const { ip, sucursal, modelo, drivers_url, tipo } = req.body;
+  const { ip, sucursal, modelo, drivers_url, tipo, toner_reserva } = req.body;
   try {
     await pool.query(
-      'INSERT INTO impresoras (ip, sucursal, modelo, drivers_url, tipo) VALUES ($1, $2, $3, $4, $5)',
-      [ip, sucursal, modelo, drivers_url, tipo]
+      'INSERT INTO impresoras (ip, sucursal, modelo, drivers_url, tipo, toner_reserva) VALUES ($1, $2, $3, $4, $5, $6)',
+      [ip, sucursal, modelo, drivers_url, tipo, toner_reserva]
     );
     res.status(201).json({ message: 'Impresora agregada' });
   } catch (err) {
@@ -49,6 +49,46 @@ function consultarToner(ip) {
     });
   });
 }
+
+setInterval(async () => {
+  try {
+    const { rows: impresoras } = await pool.query('SELECT * FROM impresoras');
+
+    for (const impresora of impresoras) {
+      const resultado = await consultarToner(impresora.ip);
+
+      if (!resultado.error && resultado.toner !== null) {
+        const tonerActual = resultado.toner;
+        const tonerAnterior = impresora.toner_anterior;
+
+        // Si se repuso el tóner (el valor subió)
+        if (tonerAnterior !== null && tonerActual > tonerAnterior) {
+          await pool.query(
+            `UPDATE impresoras
+             SET cambios_toner = cambios_toner + 1,
+                 fecha_ultimo_cambio = NOW(),
+                 toner_anterior = $1,
+                 toner_reserva = GREATEST(toner_reserva - 1, 0)
+             WHERE id = $2`,
+            [tonerActual, impresora.id]
+          );
+          console.log(`🟢 Cambio de tóner detectado en IP ${impresora.ip}`);
+        } else {
+          // Solo actualiza el toner_anterior sin contar como cambio
+          await pool.query(
+            `UPDATE impresoras
+             SET toner_anterior = $1
+             WHERE id = $2`,
+            [tonerActual, impresora.id]
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error en la verificación automática de tóner:', error);
+  }
+}, 300000); // 5 minutos
+
 
 app.get('/api/toners', async (req, res) => {
   try {
@@ -91,14 +131,14 @@ app.delete('/api/impresoras/:id', async (req, res) => {
 
 app.put('/api/impresoras/:id', async (req, res) => {
   const { id } = req.params;
-  const { ip, sucursal, modelo, drivers_url, tipo } = req.body;
+  const { ip, sucursal, modelo, drivers_url, tipo, toner_reserva } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE impresoras 
-       SET ip = $1, sucursal = $2, modelo = $3, drivers_url = $4, tipo = $5 
-       WHERE id = $6 RETURNING *`,
-      [ip, sucursal, modelo, drivers_url, tipo, id]
+       SET ip = $1, sucursal = $2, modelo = $3, drivers_url = $4, tipo = $5, toner_reserva = $6 
+       WHERE id = $7 RETURNING *`,
+      [ip, sucursal, modelo, drivers_url, tipo, toner_reserva, id]
     );
 
     if (result.rows.length === 0) {
@@ -113,6 +153,7 @@ app.put('/api/impresoras/:id', async (req, res) => {
 });
 
 
-app.listen(PORT, () => {
+
+app.listen(PORT, '0.0.0.0', () => {
   console.log('Servidor SNMP activo en http://localhost:${PORT} ✅');
 });
