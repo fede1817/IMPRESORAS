@@ -20,6 +20,11 @@ html {
   padding: 20px;
   background-color: #121212;
 }
+.elemento {
+  -webkit-background-clip: text; /* para compatibilidad con Safari/WebKit */
+  background-clip: text;         /* estándar */
+  color: transparent;
+}
 
 /* Títulos principales con gradiente centrado */
 h1, h2 {
