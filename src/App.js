@@ -99,6 +99,7 @@ const handleEdit = (impresora) => {
             <th>Nivel de Tóner Negro</th>
             <th>Info</th>
             <th>Acciones</th>
+            <th>Pedido</th>
           </tr>
         </thead>
         <tbody>
@@ -154,6 +155,7 @@ const handleEdit = (impresora) => {
             <th>Nivel de Tóner Negro</th>
             <th>Info</th>
             <th>Acciones</th>
+            
           </tr>
         </thead>
         <tbody>
@@ -238,6 +240,10 @@ const handleEdit = (impresora) => {
       <p><strong>Sucursal:</strong> {infoModal.data.sucursal}</p>
       <p><strong>Tipo:</strong> {infoModal.data.tipo}</p>
       <p><strong>Reserva de Tóner:</strong> {infoModal.data.toner_reserva}</p>
+      
+      <p><strong>Contador:</strong> {infoModal.data.info?.contador ?? 'N/A'}</p>
+      <p><strong>Número de Serie:</strong> {infoModal.data.info?.numero_serie || 'N/A'}</p>
+      
       <p><strong>Último cambio de tóner:</strong> {infoModal.data.fecha_ultimo_cambio ? new Date(infoModal.data.fecha_ultimo_cambio).toLocaleString() : 'N/A'}</p>
       <button onClick={() => setInfoModal({ visible: false, data: null })}>Cerrar</button>
     </div>
