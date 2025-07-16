@@ -102,47 +102,58 @@ const handleEdit = (impresora) => {
             <th>Pedido</th>
           </tr>
         </thead>
-        <tbody>
-          {impresoras.filter(i => i.tipo === 'principal').map((impresora, index) => (
-            <tr key={`principal-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
-              <td>
-                <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
-                  {impresora.ip}
-                </a>
-              </td>
-              <td>{impresora.sucursal}</td>
-              <td>
-                <a href={impresora.drivers_url} target="_blank" rel="noopener noreferrer">
-                  {impresora.modelo}
-                </a>
-              </td>
-              <td>
-                {impresora.toner !== null && impresora.toner >= 0 ? (
-                  <div className="t-toner-bar-container">
-                    <div
-                      className={getBarClass(impresora.toner)}
-                      style={{ width: `${impresora.toner}%` }}
-                    ></div>
-                    <div className="toner-text">{impresora.toner}%</div>
-                  </div>
-                ) : 'No disponible'}
-              </td>
-              <td> <button
-    className="info-button"
-    onClick={() => setInfoModal({ visible: true, data: impresora })}
-    title="Ver información"
-  >
-    ℹ
-  </button></td>
-              <td>
-  <div className="action-buttons">
-    <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
-    <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
-  </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+<tbody>
+  {impresoras.filter(i => i.tipo === 'principal').map((impresora, index) => (
+    <tr key={`principal-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
+      <td>
+        <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
+          {impresora.ip}
+        </a>
+      </td>
+      <td>{impresora.sucursal}</td>
+      <td>
+        <a href={impresora.drivers_url} target="_blank" rel="noopener noreferrer">
+          {impresora.modelo}
+        </a>
+      </td>
+      <td>
+        {impresora.toner !== null && impresora.toner >= 0 ? (
+          <div className="t-toner-bar-container">
+            <div
+              className={getBarClass(impresora.toner)}
+              style={{ width: `${impresora.toner}%` }}
+            ></div>
+            <div className="toner-text">{impresora.toner}%</div>
+          </div>
+        ) : 'No disponible'}
+      </td>
+      <td>
+        <button
+          className="info-button"
+          onClick={() => setInfoModal({ visible: true, data: impresora })}
+          title="Ver información"
+        >
+          ℹ
+        </button>
+      </td>
+      <td>
+        <div className="action-buttons">
+          <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
+          <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
+        </div>
+      </td>
+      <td>
+        <button
+          className="pedido-btn"
+          onClick={() => handleCopyPedido(impresora)}
+          title="Generar pedido de tóner"
+        >
+          📋 
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
       </table>
 
       <h2>Impresoras Backup</h2>
@@ -155,51 +166,69 @@ const handleEdit = (impresora) => {
             <th>Nivel de Tóner Negro</th>
             <th>Info</th>
             <th>Acciones</th>
+            <th>Pedido</th>
             
           </tr>
         </thead>
-        <tbody>
-          {impresoras.filter(i => i.tipo === 'backup').map((impresora, index) => (
-            <tr key={`backup-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
-              <td>
-                <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
-                  {impresora.ip}
-                </a>
-              </td>
-              <td>{impresora.sucursal}</td>
-              <td>
-                <a href={impresora.drivers_url} target="_blank" rel="noopener noreferrer">
-                  {impresora.modelo}
-                </a>
-              </td>
-              <td>
-                {impresora.toner !== null && impresora.toner >= 0 ? (
-                  <div className="t-toner-bar-container">
-                    <div
-                      className={getBarClass(impresora.toner)}
-                      style={{ width: `${impresora.toner}%` }}
-                    ></div>
-                    <div className="toner-text">{impresora.toner}%</div>
-                  </div>
-                ) : 'No disponible'}
-              </td>
-              <td><button
-    className="info-button"
-    onClick={() => setInfoModal({ visible: true, data: impresora })}
-    title="Ver información"
-  >
-    ℹ
-  </button></td>
-              <td>
-              <div className="action-buttons">
-    <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
-    <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
-  </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+
+
+
+
+       <tbody>
+  {impresoras.filter(i => i.tipo === 'principal').map((impresora, index) => (
+    <tr key={`principal-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
+      <td>
+        <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
+          {impresora.ip}
+        </a>
+      </td>
+      <td>{impresora.sucursal}</td>
+      <td>
+        <a href={impresora.drivers_url} target="_blank" rel="noopener noreferrer">
+          {impresora.modelo}
+        </a>
+      </td>
+      <td>
+        {impresora.toner !== null && impresora.toner >= 0 ? (
+          <div className="t-toner-bar-container">
+            <div
+              className={getBarClass(impresora.toner)}
+              style={{ width: `${impresora.toner}%` }}
+            ></div>
+            <div className="toner-text">{impresora.toner}%</div>
+          </div>
+        ) : 'No disponible'}
+      </td>
+      <td>
+        <button
+          className="info-button"
+          onClick={() => setInfoModal({ visible: true, data: impresora })}
+          title="Ver información"
+        >
+          ℹ
+        </button>
+      </td>
+      <td>
+        <div className="action-buttons">
+          <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
+          <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
+        </div>
+      </td>
+      <td>
+        <button
+          className="pedido-btn"
+          onClick={() => handleCopyPedido(impresora)}
+          title="Generar pedido de tóner"
+        >
+          📋 
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
       </table>
+      
 
       {showModal && (
         <div className="modal">
@@ -257,4 +286,60 @@ const handleEdit = (impresora) => {
 export default App;
 
 
-//hola primer push de bryan
+//boton 
+const handleCopyPedido = async (impresora) => {
+  // Preparar los datos del pedido
+  const pedidoData = {
+    impresora_id: impresora.id,
+    modelo: impresora.modelo,
+    numero_serie: impresora.info?.numero_serie ?? 'N/A',
+    contador_total: impresora.info?.contador ?? null,
+    nombre: impresora.sucursal || 'Sucursal Desconocida', // Usamos sucursal como nombre por ahora
+    direccion: 'Dirección por definir', // Placeholder, ajustar según necesidad
+    telefono: '0987 200316', // Placeholder, ajustar según necesidad
+    correo: 'bryan.medina@surcomercial.com.py', // Placeholder, ajustar según necesidad
+  };
+
+  // Texto que se copiará al portapapeles
+  const textoParaCopiar = `
+Pedido de Tóner:
+Sucursal: ${pedidoData.nombre}
+Modelo: ${pedidoData.modelo}
+Número de Serie: ${pedidoData.numero_serie}
+Contador: ${pedidoData.contador_total ?? 'N/A'}
+Dirección: ${pedidoData.direccion}
+Teléfono: ${pedidoData.telefono}
+Correo: ${pedidoData.correo}
+  `.trim();
+
+  // Mostrar diálogo de confirmación
+  const confirmacion = window.confirm(
+    `¿Confirmas el pedido de tóner para:\n\n${textoParaCopiar}`
+  );
+
+  if (confirmacion) {
+    try {
+      // Copiar al portapapeles
+      await navigator.clipboard.writeText(textoParaCopiar);
+
+      // Enviar al backend
+      const response = await fetch('http://localhost:3001/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pedidoData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar el pedido en el backend');
+      }
+
+      // Mostrar mensaje de éxito
+      alert('✅ Pedido confirmado y datos copiados al portapapeles.');
+    } catch (error) {
+      console.error('Error al procesar el pedido:', error);
+      alert('❌ Error al procesar el pedido. Por favor, intenta de nuevo.');
+    }
+  }
+};
+
+

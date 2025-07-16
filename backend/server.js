@@ -180,63 +180,34 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Servidor SNMP activo en http://localhost:${PORT} ✅`);
 });
 
-// Datos predefinidos
-const PREDEFINIDOS = {
-  nombre: 'Bryan Medina',
-  direccion: 'RUTA ACCESO A SANTANI - 200 METROS DE LA ROTONDA -SANTANI',
-  telefono: '0987 200316',
-  correo: 'bryan.medina@surcomercial.com.py',
-};
 
-// Endpoint para generar y guardar pedido
-app.post('/api/pedidos/:id', async (req, res) => {
-  const { id } = req.params;
+// pedidos
+// Endpoint para crear un nuevo pedido
+app.post('/api/pedidos', async (req, res) => {
+  const {
+    impresora_id,
+    modelo,
+    numero_serie,
+    contador_total,
+    nombre,
+    direccion,
+    telefono,
+    correo
+  } = req.body;
 
   try {
-    const { rows } = await pool.query('SELECT * FROM impresoras WHERE id = $1', [id]);
-
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Impresora no encontrada' });
-    }
-
-    const impresora = rows[0];
-
-    // Consultamos el número de serie y contador actual vía SNMP
-    const resultado = await consultarInformacionImpresora(impresora.ip);
-
-    const nuevoPedido = {
-      impresora_id: impresora.id,
-      modelo: impresora.modelo,
-      numero_serie: resultado.numero_serie || 'N/A',
-      contador_total: resultado.contador || 0,
-      nombre: PREDEFINIDOS.nombre,
-      direccion: PREDEFINIDOS.direccion,
-      telefono: PREDEFINIDOS.telefono,
-      correo: PREDEFINIDOS.correo,
-    };
-
-    // Insertamos en la base de datos
     await pool.query(
-      `INSERT INTO pedidos (impresora_id, modelo, numero_serie, contador_total, nombre, direccion, telefono, correo)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [
-        nuevoPedido.impresora_id,
-        nuevoPedido.modelo,
-        nuevoPedido.numero_serie,
-        nuevoPedido.contador_total,
-        nuevoPedido.nombre,
-        nuevoPedido.direccion,
-        nuevoPedido.telefono,
-        nuevoPedido.correo,
-      ]
+      `INSERT INTO pedidos
+       (impresora_id, modelo, numero_serie, contador_total, nombre, direccion, telefono, correo, creado_en)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+      [impresora_id, modelo, numero_serie, contador_total, nombre, direccion, telefono, correo]
     );
-
-    // Devolvemos el contenido para "copiar y pegar"
-    const texto = `🖨 Pedido generado:\n\nModelo: ${nuevoPedido.modelo}\nSerie: ${nuevoPedido.numero_serie}\nContador total al día: ${nuevoPedido.contador_total}\nNombre y Apellido: ${nuevoPedido.nombre}\nDirección de entrega: ${nuevoPedido.direccion}\nNúmero de contacto: ${nuevoPedido.telefono}\nCorreo electrónico: ${nuevoPedido.correo}`;
-
-    res.json({ mensaje: 'Pedido guardado', texto });
+    res.status(201).json({ message: 'Pedido creado correctamente ✅' });
   } catch (error) {
-    console.error('Error al generar pedido:', error);
-    res.status(500).json({ error: 'Error al generar el pedido' });
+    console.error('Error al insertar pedido:', error);
+    res.status(500).json({ error: 'Error al crear pedido ❌' });
   }
 });
+
+
+
