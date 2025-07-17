@@ -235,8 +235,11 @@ a:hover {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+.info-button {
+  background-color: #0b6edf; /* blanco */
+}
 .info-button:hover {
-  background-color: #0b5ed7;
+  background-color: #e8f0e8;
   transform: scale(1.1);
 }
 

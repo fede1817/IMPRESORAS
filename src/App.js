@@ -11,10 +11,13 @@ function App() {
     drivers_url: '',
     tipo: 'principal',
     toner_reserva: '',
+    direccion: '',
   });
   const [editingId, setEditingId] = useState(null);
   const [infoModal, setInfoModal] = useState({ visible: false, data: null });
 
+  // COMENTARIO: Carga inicial de impresoras desde el endpoint /api/toners.
+  // No requiere cambios, ya que obtiene todas las columnas de 'impresoras', incluyendo direccion, telefono, correo.
   useEffect(() => {
     fetch('http://localhost:3001/api/toners')
       .then(res => res.json())
@@ -29,63 +32,131 @@ function App() {
     return 'toner-bar high';
   };
 
+  // COMENTARIO: Maneja los cambios en los inputs del formulario.
+  // No requiere cambios, ya que incluye 'direccion' y es compatible con la estructura de la base de datos.
   const handleInputChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // COMENTARIO: Envía los datos del formulario para crear o editar una impresora.
+  // No requiere cambios, ya que envía ip, sucursal, modelo, drivers_url, tipo, toner_reserva, direccion.
+  // Nota: No envía telefono ni correo, pero el endpoint POST /api/impresoras los acepta como NULL.
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const method = editingId ? 'PUT' : 'POST';
-  const url = editingId
-    ? `http://localhost:3001/api/impresoras/${editingId}`
-    : 'http://localhost:3001/api/impresoras';
+    const method = editingId ? 'PUT' : 'POST';
+    const url = editingId
+      ? `http://localhost:3001/api/impresoras/${editingId}`
+      : 'http://localhost:3001/api/impresoras';
 
-  try {
-    await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    });
-
-    setShowModal(false);
-    setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal', toner_reserva: '' });
-    setEditingId(null);
-    window.location.reload(); // recargar o re-fetch
-  } catch (err) {
-    console.error('Error al guardar:', err);
-  }
-};
-
-  const handleDelete = async (id) => {
-  if (window.confirm('¿Estás seguro que deseas eliminar esta impresora?')) {
     try {
-      await fetch(`http://localhost:3001/api/impresoras/${id}`, {
-        method: 'DELETE',
+      await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
-      // Volvés a cargar la lista
-      setImpresoras(prev => prev.filter(p => p.id !== id));
-    } catch (error) {
-      console.error('Error al eliminar la impresora:', error);
-    }
-  }
-};
 
-const handleEdit = (impresora) => {
-  setFormData({
-    ip: impresora.ip,
-    sucursal: impresora.sucursal,
-    modelo: impresora.modelo,
-    drivers_url: impresora.drivers_url,
-    tipo: impresora.tipo,
-    toner_reserva: impresora.toner_reserva
-  });
-  setEditingId(impresora.id); // Guardamos el ID para saber si es edición
-  setShowModal(true);
-};
+      setShowModal(false);
+      setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal', toner_reserva: '', direccion: '' });
+      setEditingId(null);
+      window.location.reload(); // recargar o re-fetch
+    } catch (err) {
+      console.error('Error al guardar:', err);
+    }
+  };
+
+  // COMENTARIO: Elimina una impresora.
+  // No requiere cambios, ya que funciona correctamente con el endpoint DELETE /api/impresoras/:id.
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Estás seguro que deseas eliminar esta impresora?')) {
+      try {
+        await fetch(`http://localhost:3001/api/impresoras/${id}`, {
+          method: 'DELETE',
+        });
+        // Volvés a cargar la lista
+        setImpresoras(prev => prev.filter(p => p.id !== id));
+      } catch (error) {
+        console.error('Error al eliminar la impresora:', error);
+      }
+    }
+  };
+
+  // COMENTARIO: Carga los datos de una impresora en el formulario para editar.
+  // No requiere cambios, ya que incluye 'direccion' y es compatible con la estructura de la base de datos.
+  const handleEdit = (impresora) => {
+    setFormData({
+      ip: impresora.ip,
+      sucursal: impresora.sucursal,
+      modelo: impresora.modelo,
+      drivers_url: impresora.drivers_url,
+      tipo: impresora.tipo,
+      toner_reserva: impresora.toner_reserva,
+      direccion: impresora.direccion,
+    });
+    setEditingId(impresora.id); // Guardamos el ID para saber si es edición
+    setShowModal(true);
+  };
+
+  // COMENTARIO: Maneja el botón de pedido (📋).
+  // Cambio: Actualizado para usar impresora.contador_paginas y impresora.numero_serie en lugar de impresora.info?.contador y impresora.info?.numero_serie, ya que estas columnas están en la tabla impresoras.
+  // Nota: Sigue enviando telefono y correo como valores fijos, lo cual es compatible con el nuevo endpoint /api/pedidos.
+  const handleCopyPedido = async (impresora) => {
+    // Preparar los datos del pedido
+    const pedidoData = {
+      impresora_id: impresora.id,
+      modelo: impresora.modelo,
+      numero_serie: impresora.numero_serie ?? 'N/A', // CAMBIO: Usar impresora.numero_serie en lugar de impresora.info?.numero_serie
+      contador_total: impresora.contador_paginas ?? null, // CAMBIO: Usar impresora.contador_paginas en lugar de impresora.info?.contador
+      nombre: impresora.sucursal || 'Sucursal Desconocida',
+      direccion: impresora.direccion || 'Dirección no especificada',
+      telefono: '0987 200316',
+      correo: 'bryan.medina@surcomercial.com.py',
+    };
+
+    // Texto que se copiará al portapapeles
+    const textoParaCopiar = `
+Sucursal: ${pedidoData.nombre}
+Modelo: ${pedidoData.modelo}
+Número de Serie: ${pedidoData.numero_serie}
+Contador: ${pedidoData.contador_total ?? 'N/A'}
+Dirección: ${pedidoData.direccion}
+Teléfono: ${pedidoData.telefono}
+Correo: ${pedidoData.correo}
+    `.trim();
+
+    // Mostrar diálogo de confirmación
+    const confirmacion = window.confirm(
+      `¿Confirmas el pedido de tóner para:\n\n${textoParaCopiar}`
+    );
+
+    if (confirmacion) {
+      try {
+        // Copiar al portapapeles
+        await navigator.clipboard.writeText(textoParaCopiar);
+
+        // Enviar al backend
+        const response = await fetch('http://localhost:3001/api/pedidos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pedidoData),
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al guardar el pedido en el backend');
+        }
+
+        // Mostrar mensaje de éxito
+        alert('✅ Pedido confirmado y datos copiados al portapapeles.');
+      } catch (error) {
+        console.error('Error al procesar el pedido:', error);
+        alert('❌ Error al procesar el pedido. Por favor, intenta de nuevo.');
+      }
+    }
+  };
+
   return (
     <div className="App dark-mode">
-      <h1>Estado de las impresoras Ricoh</h1>
+      <h1>PrintManager</h1>
 
       <h2>Impresoras Principales</h2>
       <button className="add-btn" onClick={() => setShowModal(true)}>➕ Agregar Impresora</button>
@@ -102,58 +173,58 @@ const handleEdit = (impresora) => {
             <th>Pedido</th>
           </tr>
         </thead>
-<tbody>
-  {impresoras.filter(i => i.tipo === 'principal').map((impresora, index) => (
-    <tr key={`principal-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
-      <td>
-        <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
-          {impresora.ip}
-        </a>
-      </td>
-      <td>{impresora.sucursal}</td>
-      <td>
-        <a href={impresora.drivers_url} target="_blank" rel="noopener noreferrer">
-          {impresora.modelo}
-        </a>
-      </td>
-      <td>
-        {impresora.toner !== null && impresora.toner >= 0 ? (
-          <div className="t-toner-bar-container">
-            <div
-              className={getBarClass(impresora.toner)}
-              style={{ width: `${impresora.toner}%` }}
-            ></div>
-            <div className="toner-text">{impresora.toner}%</div>
-          </div>
-        ) : 'No disponible'}
-      </td>
-      <td>
-        <button
-          className="info-button"
-          onClick={() => setInfoModal({ visible: true, data: impresora })}
-          title="Ver información"
-        >
-          ℹ
-        </button>
-      </td>
-      <td>
-        <div className="action-buttons">
-          <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
-          <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
-        </div>
-      </td>
-      <td>
-        <button
-          className="pedido-btn"
-          onClick={() => handleCopyPedido(impresora)}
-          title="Generar pedido de tóner"
-        >
-          📋 
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
+        <tbody>
+          {impresoras.filter(i => i.tipo === 'principal').map((impresora, index) => (
+            <tr key={`principal-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
+              <td>
+                <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
+                  {impresora.ip}
+                </a>
+              </td>
+              <td>{impresora.sucursal}</td>
+              <td>
+                <a href={impresora.drivers_url} target="_blank" rel="noopener noreferrer">
+                  {impresora.modelo}
+                </a>
+              </td>
+              <td>
+                {impresora.toner !== null && impresora.toner >= 0 ? (
+                  <div className="t-toner-bar-container">
+                    <div
+                      className={getBarClass(impresora.toner)}
+                      style={{ width: `${impresora.toner}%` }}
+                    ></div>
+                    <div className="toner-text">{impresora.toner}%</div>
+                  </div>
+                ) : 'No disponible'}
+              </td>
+              <td>
+                <button
+                  className="info-button"
+                  onClick={() => setInfoModal({ visible: true, data: impresora })}
+                  title="Ver información"
+                >
+                  ℹ
+                </button>
+              </td>
+              <td>
+                <div className="action-buttons">
+                  <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
+                  <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
+                </div>
+              </td>
+              <td>
+                <button
+                  className="pedido-btn"
+                  onClick={() => handleCopyPedido(impresora)}
+                  title="Generar pedido de tóner"
+                >
+                  📋
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
 
       <h2>Impresoras Backup</h2>
@@ -167,68 +238,61 @@ const handleEdit = (impresora) => {
             <th>Info</th>
             <th>Acciones</th>
             <th>Pedido</th>
-            
           </tr>
         </thead>
-
-
-
-
-       <tbody>
-  {impresoras.filter(i => i.tipo === 'principal').map((impresora, index) => (
-    <tr key={`principal-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
-      <td>
-        <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
-          {impresora.ip}
-        </a>
-      </td>
-      <td>{impresora.sucursal}</td>
-      <td>
-        <a href={impresora.drivers_url} target="_blank" rel="noopener noreferrer">
-          {impresora.modelo}
-        </a>
-      </td>
-      <td>
-        {impresora.toner !== null && impresora.toner >= 0 ? (
-          <div className="t-toner-bar-container">
-            <div
-              className={getBarClass(impresora.toner)}
-              style={{ width: `${impresora.toner}%` }}
-            ></div>
-            <div className="toner-text">{impresora.toner}%</div>
-          </div>
-        ) : 'No disponible'}
-      </td>
-      <td>
-        <button
-          className="info-button"
-          onClick={() => setInfoModal({ visible: true, data: impresora })}
-          title="Ver información"
-        >
-          ℹ
-        </button>
-      </td>
-      <td>
-        <div className="action-buttons">
-          <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
-          <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
-        </div>
-      </td>
-      <td>
-        <button
-          className="pedido-btn"
-          onClick={() => handleCopyPedido(impresora)}
-          title="Generar pedido de tóner"
-        >
-          📋 
-        </button>
-      </td>
-    </tr>
-  ))}
-</tbody>
-
+        <tbody>
+          {impresoras.filter(i => i.tipo === 'backup').map((impresora, index) => (
+            <tr key={`backup-${index}`} className={editingId === impresora.id ? 'editing-row' : ''}>
+              <td>
+                <a href={`http://${impresora.ip}`} target="_blank" rel="noopener noreferrer">
+                  {impresora.ip}
+                </a>
+              </td>
+              <td>{impresora.sucursal}</td>
+              <td>
+                <a href={impresora.drivers_url} target="_blank" rel="noopener noreferrer">
+                  {impresora.modelo}
+                </a>
+              </td>
+              <td>
+                {impresora.toner !== null && impresora.toner >= 0 ? (
+                  <div className="t-toner-bar-container">
+                    <div
+                      className={getBarClass(impresora.toner)}
+                      style={{ width: `${impresora.toner}%` }}
+                    ></div>
+                    <div className="toner-text">{impresora.toner}%</div>
+                  </div>
+                ) : 'No disponible'}
+              </td>
+              <td>
+                <button
+                  className="info-button"
+                  onClick={() => setInfoModal({ visible: true, data: impresora })}
+                  title="Ver información"
+                >
+                  ℹ
+                </button>
+              </td>
+              <td>
+                <div className="action-buttons">
+                  <button className="edit-btn" onClick={() => handleEdit(impresora)}>Editar</button>
+                  <button className="delete-btn" onClick={() => handleDelete(impresora.id)}>Eliminar</button>
+                </div>
+              </td>
+              <td>
+                <button
+                  className="pedido-btn"
+                  onClick={() => handleCopyPedido(impresora)}
+                  title="Generar pedido de tóner"
+                >
+                  📋
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </table>
-      
 
       {showModal && (
         <div className="modal">
@@ -244,18 +308,19 @@ const handleEdit = (impresora) => {
                 <option value="backup">Backup</option>
               </select>
               <input name="toner_reserva" placeholder="Reserva de Toner" value={formData.toner_reserva} onChange={handleInputChange} required />
+              <input name="direccion" placeholder="direccion" value={formData.direccion} onChange={handleInputChange} required />
               <div className="form-buttons">
                 <button type="submit">Guardar</button>
                 <button
-  type="button"
-  onClick={() => {
-    setShowModal(false);
-    setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal', toner_reserva:'' });
-    setEditingId(null);
-  }}
->
-  Cancelar
-</button>
+                  type="button"
+                  onClick={() => {
+                    setShowModal(false);
+                    setFormData({ ip: '', sucursal: '', modelo: '', drivers_url: '', tipo: 'principal', toner_reserva: '', direccion: '' });
+                    setEditingId(null);
+                  }}
+                >
+                  Cancelar
+                </button>
               </div>
             </form>
           </div>
@@ -263,83 +328,22 @@ const handleEdit = (impresora) => {
       )}
 
       {infoModal.visible && (
-  <div className="modal">
-    <div className="modal-content">
-      <h3>Información de la Impresora</h3>
-      <p><strong>Sucursal:</strong> {infoModal.data.sucursal}</p>
-      <p><strong>Tipo:</strong> {infoModal.data.tipo}</p>
-      <p><strong>Reserva de Tóner:</strong> {infoModal.data.toner_reserva}</p>
-      
-      <p><strong>Contador:</strong> {infoModal.data.info?.contador ?? 'N/A'}</p>
-      <p><strong>Número de Serie:</strong> {infoModal.data.info?.numero_serie || 'N/A'}</p>
-      
-      <p><strong>Último cambio de tóner:</strong> {infoModal.data.fecha_ultimo_cambio ? new Date(infoModal.data.fecha_ultimo_cambio).toLocaleString() : 'N/A'}</p>
-      <button onClick={() => setInfoModal({ visible: false, data: null })}>Cerrar</button>
-    </div>
-  </div>
-)}
-
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Información de la Impresora</h3>
+            <p><strong>Sucursal:</strong> {infoModal.data.sucursal}</p>
+            <p><strong>Tipo:</strong> {infoModal.data.tipo}</p>
+            <p><strong>Reserva de Tóner:</strong> {infoModal.data.toner_reserva}</p>
+            <p><strong>Contador:</strong> {infoModal.data.contador_paginas ?? 'N/A'}</p> {/* CAMBIO: Usar contador_paginas en lugar de info?.contador */}
+            <p><strong>Número de Serie:</strong> {infoModal.data.numero_serie || 'N/A'}</p> {/* CAMBIO: Usar numero_serie en lugar de info?.numero_serie */}
+            <p><strong>Último cambio de tóner:</strong> {infoModal.data.fecha_ultimo_cambio ? new Date(infoModal.data.fecha_ultimo_cambio).toLocaleString() : 'N/A'}</p>
+            <p><strong>Dirección:</strong> {infoModal.data.direccion || 'N/A'}</p> {/* CAMBIO: Corregido de infoModal.data.info?.direccion a infoModal.data.direccion */}
+            <button onClick={() => setInfoModal({ visible: false, data: null })}>Cerrar</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default App;
-
-
-//boton 
-const handleCopyPedido = async (impresora) => {
-  // Preparar los datos del pedido
-  const pedidoData = {
-    impresora_id: impresora.id,
-    modelo: impresora.modelo,
-    numero_serie: impresora.info?.numero_serie ?? 'N/A',
-    contador_total: impresora.info?.contador ?? null,
-    nombre: impresora.sucursal || 'Sucursal Desconocida', // Usamos sucursal como nombre por ahora
-    direccion: 'Dirección por definir', // Placeholder, ajustar según necesidad
-    telefono: '0987 200316', // Placeholder, ajustar según necesidad
-    correo: 'bryan.medina@surcomercial.com.py', // Placeholder, ajustar según necesidad
-  };
-
-  // Texto que se copiará al portapapeles
-  const textoParaCopiar = `
-Pedido de Tóner:
-Sucursal: ${pedidoData.nombre}
-Modelo: ${pedidoData.modelo}
-Número de Serie: ${pedidoData.numero_serie}
-Contador: ${pedidoData.contador_total ?? 'N/A'}
-Dirección: ${pedidoData.direccion}
-Teléfono: ${pedidoData.telefono}
-Correo: ${pedidoData.correo}
-  `.trim();
-
-  // Mostrar diálogo de confirmación
-  const confirmacion = window.confirm(
-    `¿Confirmas el pedido de tóner para:\n\n${textoParaCopiar}`
-  );
-
-  if (confirmacion) {
-    try {
-      // Copiar al portapapeles
-      await navigator.clipboard.writeText(textoParaCopiar);
-
-      // Enviar al backend
-      const response = await fetch('http://localhost:3001/api/pedidos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pedidoData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al guardar el pedido en el backend');
-      }
-
-      // Mostrar mensaje de éxito
-      alert('✅ Pedido confirmado y datos copiados al portapapeles.');
-    } catch (error) {
-      console.error('Error al procesar el pedido:', error);
-      alert('❌ Error al procesar el pedido. Por favor, intenta de nuevo.');
-    }
-  }
-};
-
-
