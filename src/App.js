@@ -17,7 +17,6 @@ function App() {
   const [infoModal, setInfoModal] = useState({ visible: false, data: null });
 
   // COMENTARIO: Carga inicial de impresoras desde el endpoint /api/toners.
-  // No requiere cambios, ya que obtiene todas las columnas de 'impresoras', incluyendo direccion, telefono, correo.
   useEffect(() => {
     fetch('http://localhost:3001/api/toners')
       .then(res => res.json())
@@ -33,13 +32,11 @@ function App() {
   };
 
   // COMENTARIO: Maneja los cambios en los inputs del formulario.
-  // No requiere cambios, ya que incluye 'direccion' y es compatible con la estructura de la base de datos.
   const handleInputChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   // COMENTARIO: Envía los datos del formulario para crear o editar una impresora.
-  // No requiere cambios, ya que envía ip, sucursal, modelo, drivers_url, tipo, toner_reserva, direccion.
   // Nota: No envía telefono ni correo, pero el endpoint POST /api/impresoras los acepta como NULL.
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,7 +63,6 @@ function App() {
   };
 
   // COMENTARIO: Elimina una impresora.
-  // No requiere cambios, ya que funciona correctamente con el endpoint DELETE /api/impresoras/:id.
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro que deseas eliminar esta impresora?')) {
       try {
@@ -82,7 +78,6 @@ function App() {
   };
 
   // COMENTARIO: Carga los datos de una impresora en el formulario para editar.
-  // No requiere cambios, ya que incluye 'direccion' y es compatible con la estructura de la base de datos.
   const handleEdit = (impresora) => {
     setFormData({
       ip: impresora.ip,
@@ -97,24 +92,23 @@ function App() {
     setShowModal(true);
   };
 
-  // COMENTARIO: Maneja el botón de pedido (📋).
-  // Cambio: Actualizado para usar impresora.contador_paginas y impresora.numero_serie en lugar de impresora.info?.contador y impresora.info?.numero_serie, ya que estas columnas están en la tabla impresoras.
-  // Nota: Sigue enviando telefono y correo como valores fijos, lo cual es compatible con el nuevo endpoint /api/pedidos.
-  const handleCopyPedido = async (impresora) => {
-    // Preparar los datos del pedido
-    const pedidoData = {
-      impresora_id: impresora.id,
-      modelo: impresora.modelo,
-      numero_serie: impresora.numero_serie ?? 'N/A', // CAMBIO: Usar impresora.numero_serie en lugar de impresora.info?.numero_serie
-      contador_total: impresora.contador_paginas ?? null, // CAMBIO: Usar impresora.contador_paginas en lugar de impresora.info?.contador
-      nombre: impresora.sucursal || 'Sucursal Desconocida',
-      direccion: impresora.direccion || 'Dirección no especificada',
-      telefono: '0987 200316',
-      correo: 'bryan.medina@surcomercial.com.py',
-    };
+// Cambio: Copia los datos al portapapeles inmediatamente, muestra un diálogo de confirmación,
+// y si se confirma, envía el pedido al backend e incrementa toner_reserva.
+const handleCopyPedido = async (impresora) => {
+  // Preparar los datos del pedido
+  const pedidoData = {
+    impresora_id: impresora.id,
+    modelo: impresora.modelo,
+    numero_serie: impresora.numero_serie ?? 'N/A',
+    contador_total: impresora.contador_paginas ?? null,
+    nombre: impresora.sucursal || 'Sucursal Desconocida',
+    direccion: impresora.direccion || 'Dirección no especificada',
+    telefono: '0987 200316',
+    correo: 'bryan.medina@surcomercial.com.py',
+  };
 
-    // Texto que se copiará al portapapeles
-    const textoParaCopiar = `
+  // Texto que se copiará al portapapeles
+  const textoParaCopiar = `
 Sucursal: ${pedidoData.nombre}
 Modelo: ${pedidoData.modelo}
 Número de Serie: ${pedidoData.numero_serie}
@@ -122,37 +116,40 @@ Contador: ${pedidoData.contador_total ?? 'N/A'}
 Dirección: ${pedidoData.direccion}
 Teléfono: ${pedidoData.telefono}
 Correo: ${pedidoData.correo}
-    `.trim();
+  `.trim();
+
+  try {
+    // Copiar al portapapeles inmediatamente
+    await navigator.clipboard.writeText(textoParaCopiar);
 
     // Mostrar diálogo de confirmación
     const confirmacion = window.confirm(
-      `¿Confirmas el pedido de tóner para:\n\n${textoParaCopiar}`
+      `¿Deseas realizar el pedido de tóner? \n\n Datos copiados:\n\n${textoParaCopiar}`
     );
 
     if (confirmacion) {
-      try {
-        // Copiar al portapapeles
-        await navigator.clipboard.writeText(textoParaCopiar);
+      // Enviar al backend
+      const response = await fetch('http://localhost:3001/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pedidoData),
+      });
 
-        // Enviar al backend
-        const response = await fetch('http://localhost:3001/api/pedidos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(pedidoData),
-        });
-
-        if (!response.ok) {
-          throw new Error('Error al guardar el pedido en el backend');
-        }
-
-        // Mostrar mensaje de éxito
-        alert('✅ Pedido confirmado y datos copiados al portapapeles.');
-      } catch (error) {
-        console.error('Error al procesar el pedido:', error);
-        alert('❌ Error al procesar el pedido. Por favor, intenta de nuevo.');
+      if (!response.ok) {
+        throw new Error('Error al guardar el pedido en el backend');
       }
+
+      // Mostrar mensaje de éxito
+      alert('✅ Pedido confirmado y toner_reserva incrementado.');
+    } else {
+      // Si el usuario cancela, solo notificar que se copió
+      alert('✅ Datos copiados al portapapeles, pero el pedido no fue confirmado.');
     }
-  };
+  } catch (error) {
+    console.error('Error al procesar el pedido:', error);
+    alert('❌ Error al procesar el pedido. Por favor, intenta de nuevo.');
+  }
+};
 
   return (
     <div className="App dark-mode">
@@ -345,5 +342,5 @@ Correo: ${pedidoData.correo}
     </div>
   );
 }
-
+ 
 export default App;
